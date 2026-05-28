@@ -1,0 +1,124 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/services/
+
+
+- Network Management:
+    - Internet Connection:
+        icon: sh-google-light.svg
+        description: Is Google down? Or is our internet down?
+        ping: 8.8.8.8
+    - Cloudflare Status:
+        icon: si-cloudflare.svg-#ffffff
+        description: Is Cloudflare DNS servers down?
+        ping: 1.1.1.1
+    - Main Router Connection:
+        icon: si-netgear.svg-#ffffff
+        description: Netgear Nighthawk X4s D7800
+        ping: 192.168.1.1
+    - Shared Network Router:
+        icon: si-tplink.svg-#ffffff
+        href: ${GATEWAY_ADDRESS}
+        description: TP-Link VX230v
+        ping: 192.168.1.144
+    - Alyse-Net Router:
+        icon: si-gldotinet.svg-#cccccc
+        href: ${ROUTER_ADDRESS}
+        description: GL-iNet Slate 7 BE3600
+        ping: 10.67.69.1
+    - Alyse-Net LuCI Console:
+        icon: si-gldotinet.svg-#aaaaaa
+        href: ${ROUTER_ADDRESS}:8080
+        description: GL-iNet Slate 7 BE3600 via Port 8080
+        ping: 10.67.69.1
+    - AdGuard Home:
+        description: GL-iNet Slate 7 BE3600 via Port 3000
+        icon: si-adguard.svg-#ffffff
+        href: ${ADGUARD_CONSOLE}
+        widget:
+          type: adguard
+          url: ${ADGUARD_CONSOLE}
+          site: default
+          username: ${ADGUARD_USERNAME}
+          password: ${ADGUARD_PASSWORD}
+    - Tailscale:
+        description: VPN for remote access
+        icon: sh-tailscale-light.svg
+        href: https://login.tailscale.com
+
+- Server Management:
+    - Portainer:
+        icon: sh-portainer-light.svg
+        href: ${PORTAINER_CONSOLE}
+        container: portainer
+        description: Port 9443
+        widget:
+         type: portainer
+         url: ${PORTAINER_CONSOLE}:9443
+         env: 3
+         key: ${MY_PORTAINER_KEY}
+    - Glances:
+        icon: sh-glances-light.svg
+        description: Port 61208
+        href: ${GLANCES_CONSOLE}
+        container: glances
+        widgets:
+          - type: glances
+            url: ${GLANCES_CONSOLE}
+            metric: info
+            version: 4
+          - type: glances
+            url: ${GLANCES_CONSOLE}
+            metric: disk:md0
+            version: 4
+          - type: glances
+            url: ${GLANCES_CONSOLE}
+            metric: containers
+            version: 4
+          - type: glances
+            url: ${GLANCES_CONSOLE}
+            metric: network:enx207bd21c9c40
+            version: 4
+          - type: customapi
+            url: ${GLANCES_CONSOLE}/api/4/sensors
+            mappings:
+            - field: 9.value
+              label: Battery
+              format: percent
+            - field: 9.status
+              label: Charge Status
+    - Nginx Proxy Manager:
+        icon: si-nginxproxymanager.svg-#ffffff
+        description: Port 81
+        href: ${NPM_CONSOLE}
+        widget:
+          type: npm
+          url: ${NPM_CONSOLE}
+          username: ${NPM_USERNAME}
+          password: ${NPM_PASSWORD}
+
+- Media & Storage:
+    - Jellyfin:
+        icon: si-jellyfin.svg-#FFFFFF
+        href: ${JELLYFIN_CONSOLE}
+        description: Port 8096
+        container: jellyfin # Matches the container_name in your docker-compose
+        widget:
+          type: jellyfin
+          url: ${JELLYFIN_CONSOLE}
+          key: ${JELLYFIN_KEY}
+          enableNowPlaying: true # Shows what is currently being watched
+    - TVheadend:
+        description: Port 9981
+        icon: sh-tvheadend-light.svg
+        href: ${TVHEADEND_CONSOLE}
+        container: tvheadend
+
+    - SMB Share:
+        icon: mdi-nas.svg-#ffffff
+        container: samba # Tells Homepage to pull stats from the Samba container
+        widgets:
+         - type: glances
+           url: ${SMB_ADDRESS}
+           metric: fs:/mnt/vault
+           version: 4

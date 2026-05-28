@@ -1,0 +1,19 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/info-widgets/
+
+- glances:
+    url: ${GLANCES_CONSOLE}
+    version: 4
+    cpu: true
+    cputemp: true
+    memory: true
+    disk: /root
+    
+
+- datetime:
+   locale: en-au
+   format:
+    timeStyle: short
+    dateStyle: long
+    hour12: false

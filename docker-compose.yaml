@@ -1,0 +1,143 @@
+services:
+  # Portainer: Docker management
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./configs/portainer:/data
+    network_mode: host
+
+  # Homepage: Custom dashboard
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./configs/homepage:/app/config # Where your icons/links live
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allows it to show container stats
+      - /sys:/host/sys:ro  # Add this line to access battery data
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=localhost,127.0.0.1,10.67.69.0/24,10.67.69.42:3000,${MY_DUCKDNS_DOMAIN}
+
+  # Glances: System information
+  glances:
+    image: nicolargo/glances:ubuntu-latest-full
+    container_name: glances
+    restart: always
+    pid: host # Required to see all host processes
+    network_mode: host
+    read_only: true
+    privileged: false
+#   SATA or NVME smartctl monitoring
+    cap_add:
+#   SATA smartctl monitoring
+     - SYS_RAWIO
+#   NVME smartctl monitoring
+     - SYS_ADMIN
+    devices:
+     - /dev/nvme0
+     - /dev/dri
+    healthcheck:
+     test: ["CMD", "curl", "-f", "http://localhost:61208/api/4/status"]
+     interval: 30s
+     timeout: 10s
+     retries: 3
+     start_period: 40s
+    environment:
+      - GLANCES_OPT=-w
+      - PYTHONPYCACHEPREFIX=/tmp/py_caches
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/root:ro
+      - /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock:ro
+      - /etc/os-release:/etc/os-release:ro
+      - /mnt/vault:/mnt/vault:ro
+    tmpfs: /tmp
+
+  # Samba: To manage files on your RAID from your PC/Phone
+  samba:
+    image: dockurr/samba:latest
+    container_name: samba
+    restart: always
+    ports:
+      - 445:445
+    environment:
+      - USER=${SMB_USER}
+      - PASS=${SMB_PASS}
+      - NAME=Lab-Server-SMB
+      - RW=true # Enables write access for the user
+      # This line forces the container to use YOUR user ID (1000) for all files
+      - UID=1000
+      - GID=1000
+    volumes:
+      - /mnt/vault:/storage # Maps your RAID array into the share
+
+  # Jellyfin: With full GPU and RAID access
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    network_mode: 'host' # Best for DLNA/Device discovery
+    volumes:
+      - ./configs/jellyfin:/config
+      - ./configs/jellyfin-cache:/cache
+      - /mnt/vault/media:/media:ro # Mounts RAID media folder as Read-Only for safety
+    devices:
+      - /dev/dri:/dev/dri # Intel iGPU passthrough
+    restart: unless-stopped
+
+  tvheadend:
+    image: lscr.io/linuxserver/tvheadend:latest
+    container_name: tvheadend
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Canberra
+    volumes:
+      - ./configs/tvheadend:/config
+      - /mnt/vault/recordings:/recordings # Direct to your RAID!
+    devices:
+      - /dev/dvb:/dev/dvb # This is the magic line
+    ports:
+      - 9981:9981 # Web UI
+      - 9982:9982 # HTSP Stream port
+    restart: unless-stopped
+
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - '80:80'   # Standard HTTP
+      - '81:81'   # Admin Web UI
+      - '443:443' # Standard HTTPS
+    volumes:
+      - ./configs/npm/data:/data
+      - ./configs/npm/letsencrypt:/etc/letsencrypt
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 10s
+      timeout: 3s
+
+# Wake on LAN client
+  upsnap:
+    container_name: upsnap
+    image: ghcr.io/seriousm4x/upsnap:latest
+    network_mode: host
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+    cap_drop:
+      - ALL
+    volumes:
+      - ./configs/upsnap-data:/app/pb_data
+    environment:
+      - TZ=UTC
+      - UPSNAP_INTERVAL=*/10 * * * * *
+      # Change this to match your local network range if different!
+      - UPSNAP_SCAN_RANGE=10.67.69.0/24 

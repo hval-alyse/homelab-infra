@@ -15,22 +15,22 @@
     - Main Router Connection:
         icon: si-netgear.svg-#ffffff
         description: Netgear Nighthawk X4s D7800
-        ping: 192.168.1.1
+        ping: ${NBN_GATEWAY_ADDRESS}
     - Shared Network Router:
         icon: si-tplink.svg-#ffffff
         href: ${GATEWAY_ADDRESS}
         description: TP-Link VX230v
-        ping: 192.168.1.144
+        ping: ${GATEWAY_ADDRESS}
     - Alyse-Net Router:
         icon: si-gldotinet.svg-#cccccc
         href: ${ROUTER_ADDRESS}
         description: GL-iNet Slate 7 BE3600
-        ping: 10.67.69.1
+        ping: ${ROUTER_ADDRESS}
     - Alyse-Net LuCI Console:
         icon: si-gldotinet.svg-#aaaaaa
         href: ${ROUTER_ADDRESS}:8080
         description: GL-iNet Slate 7 BE3600 via Port 8080
-        ping: 10.67.69.1
+        ping: ${ROUTER_ADDRESS}
     - AdGuard Home:
         description: GL-iNet Slate 7 BE3600 via Port 3000
         icon: si-adguard.svg-#ffffff
